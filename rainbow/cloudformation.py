@@ -202,29 +202,39 @@ class Cloudformation(object):
         """
 
         previous_stack_events = initial_entry
+        retries = 0
+        max_sleep_time = 60
 
         while True:
-            stack = self.describe_stack(name)
-            stack_events = self.describe_stack_events(name)
+            try:
+                stack = self.describe_stack(name)
+                stack_events = self.describe_stack_events(name)
+            except boto.exception.BotoServerError, details:
+                if details.message == u'Rate exceeded':
+                    retries += 1
+                    stack = None
+                else:
+                    raise
 
-            if len(stack_events) > previous_stack_events:
-                # iterate on all new events, at reversed order (the list is sorted from newest to oldest)
-                for event in stack_events[:-previous_stack_events or None][::-1]:
-                    yield {'resource_type': event.resource_type,
-                           'logical_resource_id': event.logical_resource_id,
-                           'physical_resource_id': event.physical_resource_id,
-                           'resource_status': event.resource_status,
-                           'resource_status_reason': event.resource_status_reason,
-                           'timestamp': event.timestamp}
+            if stack:
+                if len(stack_events) > previous_stack_events:
+                    # iterate on all new events, at reversed order (the list is sorted from newest to oldest)
+                    for event in stack_events[:-previous_stack_events or None][::-1]:
+                        yield {'resource_type': event.resource_type,
+                               'logical_resource_id': event.logical_resource_id,
+                               'physical_resource_id': event.physical_resource_id,
+                               'resource_status': event.resource_status,
+                               'resource_status_reason': event.resource_status_reason,
+                               'timestamp': event.timestamp}
 
-                previous_stack_events = len(stack_events)
+                    previous_stack_events = len(stack_events)
 
-            if stack.stack_status.endswith('_FAILED') or \
+                if stack.stack_status.endswith('_FAILED') or \
                     stack.stack_status in ('ROLLBACK_COMPLETE', 'UPDATE_ROLLBACK_COMPLETE'):
-                yield StackFailStatus(stack.stack_status)
-                break
-            elif stack.stack_status.endswith('_COMPLETE'):
-                yield StackSuccessStatus(stack.stack_status)
-                break
+                    yield StackFailStatus(stack.stack_status)
+                    break
+                elif stack.stack_status.endswith('_COMPLETE'):
+                    yield StackSuccessStatus(stack.stack_status)
+                    break
 
-            time.sleep(2)
+            time.sleep(min(pow(2, retries), max_sleep_time))
