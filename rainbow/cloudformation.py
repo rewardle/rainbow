@@ -142,12 +142,12 @@ class Cloudformation(object):
         except boto.exception.BotoServerError, ex:
             raise CloudformationException('error occured while creating stack %s: %s' % (name, ex.message))
 
-    def boto_with_retries(self, action, name):
+    def with_boto_retries(self, action, *args):
         retries = 0
         max_sleep_time = 60
         while True:
             try:
-                return action(name)
+                return action(*args)
             except boto.exception.BotoServerError, details:
                 if details.message == u'Rate exceeded':
                     retries += 1
@@ -165,7 +165,7 @@ class Cloudformation(object):
         :rtype: list of boto.cloudformation.stack.StackEvent
         """
 
-        return boto_all(self.connection.describe_stack_events, name)
+        return with_boto_retries(boto_all, self.connection.describe_stack_events, name)
 
     def describe_stack(self, name):
         """
@@ -176,7 +176,7 @@ class Cloudformation(object):
         :rtype: boto.cloudformation.stack.Stack
         """
 
-        return self.connection.describe_stacks(name)[0]
+        return with_boto_retries(self.connection.describe_stacks, name)[0]
 
     def tail_stack_events(self, name, initial_entry=None):
         """
@@ -216,10 +216,10 @@ class Cloudformation(object):
 
         previous_stack_events = initial_entry
 
-        stack = self.boto_with_retries(self.describe_stack, name)
+        stack = self.describe_stack(name)
 
         while True:
-            stack_events = self.boto_with_retries(self.describe_stack_events, name)
+            stack_events = self.describe_stack_events(name)
 
             if len(stack_events) > previous_stack_events:
                 # iterate on all new events, at reversed order (the list is sorted from newest to oldest)
