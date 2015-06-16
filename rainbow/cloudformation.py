@@ -142,6 +142,19 @@ class Cloudformation(object):
         except boto.exception.BotoServerError, ex:
             raise CloudformationException('error occured while creating stack %s: %s' % (name, ex.message))
 
+    def boto_with_retries(self, action, name):
+        retries = 0
+        max_sleep_time = 60
+        while True:
+            try:
+                return action(name)
+            except boto.exception.BotoServerError, details:
+                if details.message == u'Rate exceeded':
+                    retries += 1
+                else:
+                    raise
+            time.sleep(min(pow(2, retries), max_sleep_time))
+
     def describe_stack_events(self, name):
         """
         Describe CFN stack events
@@ -202,39 +215,30 @@ class Cloudformation(object):
         """
 
         previous_stack_events = initial_entry
-        retries = 0
-        max_sleep_time = 60
+
+        stack = self.boto_with_retries(self.describe_stack, name)
 
         while True:
-            try:
-                stack = self.describe_stack(name)
-                stack_events = self.describe_stack_events(name)
-            except boto.exception.BotoServerError, details:
-                if details.message == u'Rate exceeded':
-                    retries += 1
-                    stack = None
-                else:
-                    raise
+            stack_events = self.boto_with_retries(self.describe_stack_events, name)
 
-            if stack:
-                if len(stack_events) > previous_stack_events:
-                    # iterate on all new events, at reversed order (the list is sorted from newest to oldest)
-                    for event in stack_events[:-previous_stack_events or None][::-1]:
-                        yield {'resource_type': event.resource_type,
-                               'logical_resource_id': event.logical_resource_id,
-                               'physical_resource_id': event.physical_resource_id,
-                               'resource_status': event.resource_status,
-                               'resource_status_reason': event.resource_status_reason,
-                               'timestamp': event.timestamp}
+            if len(stack_events) > previous_stack_events:
+                # iterate on all new events, at reversed order (the list is sorted from newest to oldest)
+                for event in stack_events[:-previous_stack_events or None][::-1]:
+                    yield {'resource_type': event.resource_type,
+                           'logical_resource_id': event.logical_resource_id,
+                           'physical_resource_id': event.physical_resource_id,
+                           'resource_status': event.resource_status,
+                           'resource_status_reason': event.resource_status_reason,
+                           'timestamp': event.timestamp}
 
-                    previous_stack_events = len(stack_events)
+                previous_stack_events = len(stack_events)
 
-                if stack.stack_status.endswith('_FAILED') or \
-                    stack.stack_status in ('ROLLBACK_COMPLETE', 'UPDATE_ROLLBACK_COMPLETE'):
-                    yield StackFailStatus(stack.stack_status)
-                    break
-                elif stack.stack_status.endswith('_COMPLETE'):
-                    yield StackSuccessStatus(stack.stack_status)
-                    break
+            if stack.stack_status.endswith('_FAILED') or \
+                stack.stack_status in ('ROLLBACK_COMPLETE', 'UPDATE_ROLLBACK_COMPLETE'):
+                yield StackFailStatus(stack.stack_status)
+                break
+            elif stack.stack_status.endswith('_COMPLETE'):
+                yield StackSuccessStatus(stack.stack_status)
+                break
 
-            time.sleep(min(pow(2, retries), max_sleep_time))
+            time.sleep(2)
