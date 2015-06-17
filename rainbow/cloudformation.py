@@ -165,7 +165,7 @@ class Cloudformation(object):
         :rtype: list of boto.cloudformation.stack.StackEvent
         """
 
-        return with_boto_retries(boto_all, self.connection.describe_stack_events, name)
+        return self.with_boto_retries(boto_all, self.connection.describe_stack_events, name)
 
     def describe_stack(self, name):
         """
@@ -176,7 +176,7 @@ class Cloudformation(object):
         :rtype: boto.cloudformation.stack.Stack
         """
 
-        return with_boto_retries(self.connection.describe_stacks, name)[0]
+        return self.with_boto_retries(self.connection.describe_stacks, name)[0]
 
     def tail_stack_events(self, name, initial_entry=None):
         """
