@@ -149,10 +149,9 @@ class Cloudformation(object):
             try:
                 return action(*args)
             except boto.exception.BotoServerError, details:
-                if details.message == u'Rate exceeded':
-                    retries += 1
-                else:
+                if details.message != u'Rate exceeded':
                     raise
+                retries += 1
             time.sleep(min(pow(2, retries), max_sleep_time))
 
     def describe_stack_events(self, name):
