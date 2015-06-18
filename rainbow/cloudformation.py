@@ -215,9 +215,8 @@ class Cloudformation(object):
 
         previous_stack_events = initial_entry
 
-        stack = self.describe_stack(name)
-
         while True:
+            stack = self.describe_stack(name)
             stack_events = self.describe_stack_events(name)
 
             if len(stack_events) > previous_stack_events:
