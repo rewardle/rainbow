@@ -98,7 +98,7 @@ class Cloudformation(object):
                                                                if state != 'DELETE_COMPLETE'])
         return name in [stack.stack_name for stack in active_stacks if stack.stack_status]
 
-    def update_stack(self, name, template, parameters):
+    def update_stack(self, name, template, parameters, tags):
         """
         Update CFN stack
 
@@ -114,7 +114,8 @@ class Cloudformation(object):
 
         try:
             self.connection.update_stack(name, json.dumps(template), disable_rollback=True,
-                                         parameters=parameters.items(), capabilities=['CAPABILITY_IAM'])
+                                         parameters=parameters.items(), capabilities=['CAPABILITY_IAM'],
+                                         tags=tags)
         except boto.exception.BotoServerError, ex:
             if ex.message == 'No updates are to be performed.':
                 # this is not really an error, but there aren't any updates.
@@ -124,7 +125,7 @@ class Cloudformation(object):
         else:
             return True
 
-    def create_stack(self, name, template, parameters):
+    def create_stack(self, name, template, parameters, tags):
         """
         Create CFN stack
 
@@ -138,7 +139,8 @@ class Cloudformation(object):
 
         try:
             self.connection.create_stack(name, json.dumps(template), disable_rollback=True,
-                                         parameters=parameters.items(), capabilities=['CAPABILITY_IAM'])
+                                         parameters=parameters.items(), capabilities=['CAPABILITY_IAM'],
+                                         tags=tags)
         except boto.exception.BotoServerError, ex:
             raise CloudformationException('error occured while creating stack %s: %s' % (name, ex.message))
 

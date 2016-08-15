@@ -24,6 +24,8 @@ def main():  # pragma: no cover
                         help='Data source. Format is data_sourcetype:data_sourceargument. For example, ' +
                              'cfn_outputs:[region:]stackname, cfn_resources:[region:]stackname, or ' +
                              'yaml:yamlfile. First match is used')
+    parser.add_argument('-t', '--tag', metavar='TAG', dest='tags', action='append', default=[],
+                        help='Tag. Format is key=value. Multiple tags can be provided, one per -t')
     parser.add_argument('-r', '--region', default='us-east-1', help='AWS region')
     parser.add_argument('-n', '--noop', action='store_true',
                         help="Don't actually call aws; just show what would be done.")
@@ -46,6 +48,7 @@ def main():  # pragma: no cover
 
     Cloudformation.default_region = args.region
     datasource_collection = DataSourceCollection(args.datasources)
+    tags = [ { 'Key': item.split('=')[0], 'Value': item.split('=')[1] } for item in args.tags ]
 
     # load and merge templates
     template = TemplateLoader.load_templates(args.templates)
@@ -81,11 +84,11 @@ def main():  # pragma: no cover
         stack_events_iterator = cloudformation.tail_stack_events(args.stack_name, None if args.update_stack else 0)
 
     if args.update_stack:
-        stack_modified = cloudformation.update_stack(args.stack_name, template, parameters)
+        stack_modified = cloudformation.update_stack(args.stack_name, template, parameters, tags)
         if not stack_modified:
             logger.info('No updates to be performed')
     else:
-        cloudformation.create_stack(args.stack_name, template, parameters)
+        cloudformation.create_stack(args.stack_name, template, parameters, tags)
         stack_modified = True
 
     if args.block and stack_modified:
