@@ -48,7 +48,7 @@ def main():  # pragma: no cover
 
     Cloudformation.default_region = args.region
     datasource_collection = DataSourceCollection(args.datasources)
-    tags = [ { 'Key': item.split('=')[0], 'Value': item.split('=')[1] } for item in args.tags ]
+    tags = dict([ item.split('=') for item in args.tags ])
 
     # load and merge templates
     template = TemplateLoader.load_templates(args.templates)
