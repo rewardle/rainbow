@@ -84,6 +84,7 @@ def main():  # pragma: no cover
         stack_events_iterator = cloudformation.tail_stack_events(args.stack_name, None if args.update_stack else 0)
 
     if args.update_stack:
+        logger.debug('Updating Stack: "%s"',args.stack_name)
         stack_modified = cloudformation.update_stack(args.stack_name, template, parameters, tags)
         if not stack_modified:
             logger.info('No updates to be performed')
