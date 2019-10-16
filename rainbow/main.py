@@ -87,17 +87,20 @@ def main():  # pragma: no cover
         # set the iterator prior to updating the stack, so it'll begin from the current bottom
         stack_events_iterator = cloudformation.tail_stack_events(args.stack_name, None if args.update_stack else 0)
 
+    logger.debug('about to check is stack update is needed')
     if args.update_stack:
         logger.debug('about to update stack')
-        logger.debug('Updating Stack: "%s"',args.stack_name)
+        # logger.debug('Updating Stack: "%s"',args.stack_name)
         stack_modified = cloudformation.update_stack(args.stack_name, template, parameters, tags)
         logger.debug('after stack update')
         if not stack_modified:
             logger.info('No updates to be performed')
     else:
+        logger.debug('stack create needed')
         cloudformation.create_stack(args.stack_name, template, parameters, tags)
         stack_modified = True
 
+    logger.debug('Before checking if stack created all ok')
     if args.block and stack_modified:
         for event in stack_events_iterator:
             if isinstance(event, StackFailStatus):
