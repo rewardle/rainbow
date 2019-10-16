@@ -71,12 +71,16 @@ def main():  # pragma: no cover
         logger.info('NOOP mode. exiting')
         return
 
+    logger.debug('Before Setting Region of "%s"',args.region)
     cloudformation = Cloudformation(args.region)
+    logger.debug('Before Setting Region')
 
     if args.update_stack_if_exists:
         if cloudformation.stack_exists(args.stack_name):
+            logger.debug('Stack Exists')
             args.update_stack = True
         else:
+            logger.debug('Stack does not Exist')
             args.update_stack = False
 
     if args.block:
@@ -84,8 +88,10 @@ def main():  # pragma: no cover
         stack_events_iterator = cloudformation.tail_stack_events(args.stack_name, None if args.update_stack else 0)
 
     if args.update_stack:
+        logger.debug('about to update stack')
         logger.debug('Updating Stack: "%s"',args.stack_name)
         stack_modified = cloudformation.update_stack(args.stack_name, template, parameters, tags)
+        logger.debug('after stack update')
         if not stack_modified:
             logger.info('No updates to be performed')
     else:
