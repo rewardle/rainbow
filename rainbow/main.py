@@ -75,20 +75,22 @@ def main():  # pragma: no cover
     cloudformation = Cloudformation(args.region)
     logger.debug('Before Setting Region')
 
+    update_stack = False
     if args.update_stack_if_exists:
         if cloudformation.stack_exists(args.stack_name):
-            logger.debug('Stack Exists')
-            args.update_stack = True
+            logger.debug('Stack Existsss')
+            update_stack = True
         else:
             logger.debug('Stack does not Exist')
-            args.update_stack = False
+            update_stack = False
 
+    logger.debug('Before Block check')
     if args.block:
         # set the iterator prior to updating the stack, so it'll begin from the current bottom
-        stack_events_iterator = cloudformation.tail_stack_events(args.stack_name, None if args.update_stack else 0)
+        stack_events_iterator = cloudformation.tail_stack_events(args.stack_name, None if update_stack else 0)
 
     logger.debug('about to check is stack update is needed')
-    if args.update_stack:
+    if update_stack:
         logger.debug('about to update stack')
         # logger.debug('Updating Stack: "%s"',args.stack_name)
         stack_modified = cloudformation.update_stack(args.stack_name, template, parameters, tags)
