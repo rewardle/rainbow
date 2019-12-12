@@ -125,6 +125,33 @@ class Cloudformation(object):
         else:
             return True
 
+    def update_stack_with_template_url(self, name, template_url, parameters, tags):
+        """
+        Update CFN stack
+
+        :param name: stack name
+        :type name: str
+        :param template: JSON encodeable object
+        :type template: str
+        :param parameters: dictionary containing key value pairs as CFN parameters
+        :type parameters: dict
+        :rtype: bool
+        :return: False if there aren't any updates to be performed, True if no exception has been thrown.
+        """
+
+        try:
+            self.connection.update_stack(name, templateurl=template_url, disable_rollback=True,
+                                         parameters=parameters.items(), capabilities=['CAPABILITY_IAM'],
+                                         tags=tags)
+        except boto.exception.BotoServerError, ex:
+            if ex.message == 'No updates are to be performed.':
+                # this is not really an error, but there aren't any updates.
+                return False
+            else:
+                raise CloudformationException('error occured while updating stack %s: %s' % (name, ex.message))
+        else:
+            return True
+
     def create_stack(self, name, template, parameters, tags):
         """
         Create CFN stack
@@ -139,6 +166,25 @@ class Cloudformation(object):
 
         try:
             self.connection.create_stack(name, json.dumps(template), disable_rollback=True,
+                                         parameters=parameters.items(), capabilities=['CAPABILITY_IAM'],
+                                         tags=tags)
+        except boto.exception.BotoServerError, ex:
+            raise CloudformationException('error occured while creating stack %s: %s' % (name, ex.message))
+
+    def create_stack_with_template_url(self, name, template_url, parameters, tags):
+        """
+        Create CFN stack
+
+        :param name: stack name
+        :type name: str
+        :param template: JSON encodeable object
+        :type template: str
+        :param parameters: dictionary containing key value pairs as CFN parameters
+        :type parameters: dict
+        """
+
+        try:
+            self.connection.create_stack(name, templateurl=template_url, disable_rollback=True,
                                          parameters=parameters.items(), capabilities=['CAPABILITY_IAM'],
                                          tags=tags)
         except boto.exception.BotoServerError, ex:
