@@ -140,7 +140,7 @@ class Cloudformation(object):
         """
 
         try:
-            self.connection.update_stack(name, templateurl=template_url, disable_rollback=True,
+            self.connection.update_stack(name, template_url=template_url, disable_rollback=True,
                                          parameters=parameters.items(), capabilities=['CAPABILITY_IAM'],
                                          tags=tags)
         except boto.exception.BotoServerError, ex:
@@ -184,7 +184,7 @@ class Cloudformation(object):
         """
 
         try:
-            self.connection.create_stack(name, templateurl=template_url, disable_rollback=True,
+            self.connection.create_stack(name, template_url=template_url, disable_rollback=True,
                                          parameters=parameters.items(), capabilities=['CAPABILITY_IAM'],
                                          tags=tags)
         except boto.exception.BotoServerError, ex:
