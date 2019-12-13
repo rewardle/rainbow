@@ -8,7 +8,7 @@ from rainbow.datasources import DataSourceCollection
 from rainbow.preprocessor import Preprocessor
 from rainbow.templates import TemplateLoader
 from rainbow.cloudformation import Cloudformation, StackFailStatus, StackSuccessStatus
-
+from s3helper import S3Helper
 
 def main():  # pragma: no cover
     logging.basicConfig(level=logging.INFO)
@@ -89,17 +89,36 @@ def main():  # pragma: no cover
         # set the iterator prior to updating the stack, so it'll begin from the current bottom
         stack_events_iterator = cloudformation.tail_stack_events(args.stack_name, None if update_stack else 0)
 
+    use_template_url = False
+    template_key_url = ""
+    deployment_bucket_name_parameter= "ServerlessDeployBucketName"
+    deployment_bucket_name = S3Helper.get_deployment_bucket_name_from_template_parameters(parameters, deployment_bucket_name_parameter)
+    if(len(deployment_bucket_name.strip()) > 0):
+        template_s3_key = S3Helper.get_template_key(args.stack_name)
+        if(len(template_s3_key.strip()) > 0):
+            s3helper = S3Helper()
+            template_key_url = s3helper.upload_template_to_s3_deployment_bucket(deployment_bucket_name,template_s3_key,template)
+            if(len(template_key_url.strip()) > 0):
+                use_template_url = True
+
     logger.debug('about to check is stack update is needed')
     if update_stack:
         logger.debug('about to update stack')
         # logger.debug('Updating Stack: "%s"',args.stack_name)
-        stack_modified = cloudformation.update_stack(args.stack_name, template, parameters, tags)
+        stack_modified = False
+        if use_template_url:
+            stack_modified = cloudformation.update_stack_with_template_url(args.stack_name, template_key_url, parameters, tags)
+        else:
+            stack_modified = cloudformation.update_stack(args.stack_name, template, parameters, tags)
         logger.debug('after stack update')
         if not stack_modified:
             logger.info('No updates to be performed')
     else:
         logger.debug('stack create needed')
-        cloudformation.create_stack(args.stack_name, template, parameters, tags)
+        if use_template_url:
+            cloudformation.create_stack_with_template_url(args.stack_name, template_key_url, parameters, tags)
+        else:
+            cloudformation.create_stack(args.stack_name, template, parameters, tags)
         stack_modified = True
 
     logger.debug('Before checking if stack created all ok')
