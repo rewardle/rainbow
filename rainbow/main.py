@@ -94,13 +94,12 @@ def main():  # pragma: no cover
     template_key_url = ""
     deployment_bucket_name_parameter= "ServerlessDeployBucketName"
     deployment_bucket_name = S3Helper.get_deployment_bucket_name_from_template_parameters(parameters, deployment_bucket_name_parameter)
-    if(len(deployment_bucket_name.strip()) > 0):
-        template_s3_key = S3Helper.get_template_key(args.stack_name)
-        if(len(template_s3_key.strip()) > 0):
-            s3helper = S3Helper()
-            template_key_url = s3helper.upload_template_to_s3_deployment_bucket(deployment_bucket_name,template_s3_key,json.dumps(template))
-            if(len(template_key_url.strip()) > 0):
-                use_template_url = True
+    template_s3_key = S3Helper.get_template_key(args.stack_name)
+    if len(template_s3_key.strip()) > 0:
+        s3helper = S3Helper()
+        template_key_url = s3helper.upload_template_to_s3_deployment_bucket(deployment_bucket_name,template_s3_key,template)
+        if len(template_key_url.strip()) > 0:
+            use_template_url = True
 
     logger.debug('about to check is stack update is needed')
     if update_stack:
