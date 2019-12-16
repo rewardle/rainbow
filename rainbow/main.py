@@ -97,7 +97,7 @@ def main():  # pragma: no cover
     template_s3_key = S3Helper.get_template_key(args.stack_name)
     if len(template_s3_key.strip()) > 0:
         s3helper = S3Helper()
-        template_key_url = s3helper.upload_template_to_s3_deployment_bucket(deployment_bucket_name,template_s3_key,template)
+        template_key_url = s3helper.upload_template_to_s3_deployment_bucket(deployment_bucket_name,template_s3_key,json.dumps(template))
         if len(template_key_url.strip()) > 0:
             use_template_url = True
 
