@@ -4,6 +4,9 @@ from datetime import datetime
 class DeploymentBucketParameterNotFound(Exception):
     pass
 
+class DeploymentBucketNameNotSet(Exception):
+    pass
+
 def epoch_in_milliseconds_from_timestamp(timestamp):
     return int((timestamp - datetime(1970, 1, 1)).total_seconds() * 1000)
 
@@ -23,11 +26,14 @@ class S3Helper(object):
 
         """
         deployment_bucket_name_parameter_value = ""
-        if deployment_bucket_name_parameter in parameters:
-            deployment_bucket_name_parameter_value= parameters[deployment_bucket_name_parameter]
+
+        if not deployment_bucket_name_parameter in parameters:
+            raise DeploymentBucketParameterNotFound("Deployment Bucket Parameter '{0}' not found.".format(deployment_bucket_name_parameter))
+
+        deployment_bucket_name_parameter_value= parameters[deployment_bucket_name_parameter]
         
         if len(deployment_bucket_name_parameter_value.strip()) == 0:
-            raise DeploymentBucketParameterNotFound("Deployment Bucket Parameter '{0}' not found.".format(deployment_bucket_name_parameter))
+            raise DeploymentBucketNameNotSet("Deployment bucket name is not set.")
 
         return deployment_bucket_name_parameter_value
 
