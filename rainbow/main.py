@@ -11,9 +11,6 @@ from rainbow.cloudformation import Cloudformation, StackFailStatus, StackSuccess
 from s3helper import S3Helper
 import json
 
-class DeploymentBucketNameNotSet(Exception):
-    pass
-
 def main():  # pragma: no cover
     logging.basicConfig(level=logging.INFO)
 
@@ -42,7 +39,7 @@ def main():  # pragma: no cover
                         help='Create a new stack if it doesn\'t exist, update if it does')
     parser.add_argument('--block', action='store_true',
                         help='Track stack creation, if the stack creation failed, exits with a non-zero exit code')
-    parser.add_argument('--deployment-bucket-name', default='', type=str, help='Deployment bucket name')
+    
     parser.add_argument('stack_name')
     parser.add_argument('templates', metavar='template', type=str, nargs='+')
     
@@ -50,9 +47,6 @@ def main():  # pragma: no cover
     args = parser.parse_args()
     if args.verbose:
         logger.setLevel(logging.DEBUG)
-
-    if len(args.deployment_bucket_name.strip()) == 0:
-        raise DeploymentBucketNameNotSet("Deployment bucket name is not set.")
 
     Cloudformation.default_region = args.region
     datasource_collection = DataSourceCollection(args.datasources)
@@ -99,12 +93,12 @@ def main():  # pragma: no cover
 
     use_template_url = False
     template_key_url = ""
-    #deployment_bucket_name_parameter= "ServerlessDeployBucketName"
-    #deployment_bucket_name = S3Helper.get_deployment_bucket_name_from_template_parameters(parameters, deployment_bucket_name_parameter)
+    deployment_bucket_name_parameter= "ServerlessDeployBucketName"
+    deployment_bucket_name = S3Helper.get_deployment_bucket_name_from_template_parameters(parameters, deployment_bucket_name_parameter)
     template_s3_key = S3Helper.get_template_key(args.stack_name)
     if len(template_s3_key.strip()) > 0:
         s3helper = S3Helper()
-        template_key_url = s3helper.upload_template_to_s3_deployment_bucket(args.deployment_bucket_name,template_s3_key,json.dumps(template))
+        template_key_url = s3helper.upload_template_to_s3_deployment_bucket(deployment_bucket_name,template_s3_key,json.dumps(template))
         if len(template_key_url.strip()) > 0:
             use_template_url = True
 
