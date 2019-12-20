@@ -52,6 +52,14 @@ def main():  # pragma: no cover
         logger.setLevel(logging.DEBUG)
 
     logger.debug("deployment_bucket_name = '%s'.", args.deployment_bucket_name)
+    
+    logger.debug("start logging argument...")
+
+    for arg in vars(args):
+        logger.debug('"%s" = "%r"', arg, getattr(args, arg))
+    
+    logger.debug("end logging argument...")
+    
 
     if not args.deployment_bucket_name or (args.deployment_bucket_name and len(args.deployment_bucket_name.strip()) == 0):
         raise DeploymentBucketNameNotSet("Deployment bucket name is not set.")
