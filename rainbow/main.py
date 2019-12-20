@@ -42,7 +42,7 @@ def main():  # pragma: no cover
                         help='Create a new stack if it doesn\'t exist, update if it does')
     parser.add_argument('--block', action='store_true',
                         help='Track stack creation, if the stack creation failed, exits with a non-zero exit code')
-    parser.add_argument('-b','--deployment-bucket-name', default='', help='Deployment bucket name')
+    parser.add_argument('-b', dest='deployment_bucket_name', default='', help='Deployment bucket name')
     parser.add_argument('stack_name')
     parser.add_argument('templates', metavar='template', type=str, nargs='+')
     
