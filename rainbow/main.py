@@ -42,15 +42,13 @@ def main():  # pragma: no cover
                         help='Create a new stack if it doesn\'t exist, update if it does')
     parser.add_argument('--block', action='store_true',
                         help='Track stack creation, if the stack creation failed, exits with a non-zero exit code')
-    parser.add_argument('-b', dest='deployment_bucket_name', default='', help='Deployment bucket name')
+    parser.add_argument('--deployment-bucket-name', default='', help='Deployment bucket name')
     parser.add_argument('stack_name')
     parser.add_argument('templates', metavar='template', type=str, nargs='+')
     
-
     args = parser.parse_args()
     if args.verbose:
         logger.setLevel(logging.DEBUG)
-
    
     logger.debug("start logging argument...")
 
@@ -58,7 +56,6 @@ def main():  # pragma: no cover
         logger.debug('"%s" = "%r"', arg, getattr(args, arg))
     
     logger.debug("end logging argument...")
-    
 
     if not args.deployment_bucket_name or (args.deployment_bucket_name and len(args.deployment_bucket_name.strip()) == 0):
         raise DeploymentBucketNameNotSet("Deployment bucket name is not set.")
