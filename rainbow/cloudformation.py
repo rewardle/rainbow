@@ -114,7 +114,7 @@ class Cloudformation(object):
 
         try:
             self.connection.update_stack(name, json.dumps(template), disable_rollback=True,
-                                         parameters=parameters.items(), capabilities=['CAPABILITY_IAM'],
+                                         parameters=parameters.items(), capabilities=['CAPABILITY_IAM','CAPABILITY_NAMED_IAM'],
                                          tags=tags)
         except boto.exception.BotoServerError, ex:
             if ex.message == 'No updates are to be performed.':
@@ -141,7 +141,7 @@ class Cloudformation(object):
 
         try:
             self.connection.update_stack(name, template_url=template_url, disable_rollback=True,
-                                         parameters=parameters.items(), capabilities=['CAPABILITY_IAM'],
+                                         parameters=parameters.items(), capabilities=['CAPABILITY_IAM','CAPABILITY_NAMED_IAM'],
                                          tags=tags)
         except boto.exception.BotoServerError, ex:
             if ex.message == 'No updates are to be performed.':
